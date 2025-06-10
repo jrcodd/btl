@@ -1,0 +1,36 @@
+Metadata-Version: 2.4
+Name: sofa_env
+Version: 1.0.0
+Summary: Gymnasium wrapper for SOFA simulations
+Author: Paul Maria Scheikl
+Author-email: pscheik1@jhu.edu
+Requires-Python: >=3.9
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: gymnasium
+Requires-Dist: pyglet==1.5.21
+Requires-Dist: pygame
+Requires-Dist: PyOpenGL==3.1.7
+Requires-Dist: PyOpenGL-accelerate
+Requires-Dist: Sphinx
+Requires-Dist: sphinx-tabs
+Requires-Dist: sphinx_rtd_theme
+Requires-Dist: sphinx-autobuild
+Requires-Dist: autodocsumm
+Requires-Dist: opencv-python
+Requires-Dist: matplotlib
+Requires-Dist: tqdm
+Requires-Dist: requests
+Requires-Dist: numba
+Requires-Dist: inputs
+Requires-Dist: numpy-stl
+Requires-Dist: open3d
+Requires-Dist: pytest
+Requires-Dist: filelock
+Requires-Dist: scipy
+Dynamic: author
+Dynamic: author-email
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
