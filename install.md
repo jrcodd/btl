@@ -1,6 +1,9 @@
 1. clone github repos sofa_env and sofa_zoo
 2. pip install both
 3. 
+make conda env 
+conda activate /home/btl/NewVolume/Jackson/conda_sofa
+
 ls $FOLDER_TARGET/lib/libSofa.Component.AnimationLoop.*
 FOLDER_SRC=~/NewVolume/Jackson/sofa/src
 FOLDER_TARGET=~/NewVolume/Jackson/sofa/build
