@@ -575,8 +575,8 @@ if __name__ == "__main__":
         control_retraction_force=True,
     )
     #to reset without printing logs/warnings
-    with suppress_stdout():
-        env.reset()
+    #with suppress_stdout():
+    env.reset()
     done = False
 
     fps_list = deque(maxlen=100)

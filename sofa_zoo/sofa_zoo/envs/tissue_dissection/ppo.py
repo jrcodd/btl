@@ -12,12 +12,12 @@ if __name__ == "__main__":
     continuous_actions = True
     normalize_reward = True
     reward_clip = np.inf
-
+    #Pose, TPSD state, and activation of the instrument; positions of 10 points on the flap, of 10 points on the connective tissue, and of the closest point between instrument and connective tissue. gives us a shape of 75, then if we stack this 4 times, it comes out to 300 as observed in the trained model
     parameters = ["STATE", "2", "False", "False"]
 
     observation_type = ObservationType[parameters[0]]
     image_based = observation_type in [ObservationType.RGB, ObservationType.RGBD]
-    #use RenderMode.NONE to try and fix sigfault issue
+    #use RenderMode.NONE to try and fix sigfault issue (it worked)
     render_mode = RenderMode.NONE
     #render_mode = RenderMode.HEADLESS if image_based or add_render_callback else RenderMode.NONE
 
@@ -30,18 +30,19 @@ if __name__ == "__main__":
         "frame_skip": 10,
         "settle_steps": 10,
         "render_mode": render_mode,
+        #TODO modify rewards to encourage only cutting correct tissue, and quickly
         "reward_amount_dict": {
             "unstable_deformation": -1.0,
             "distance_cauter_border_point": -10.0,
             "delta_distance_cauter_border_point": -10.0,
-            "cut_connective_tissue": 0.5,
-            "cut_tissue": -0.1,
+            "cut_connective_tissue": 1.0, #Increased from 0.5 -> 1.0 to encourage more cutting
+            "cut_tissue": -0.5, #Increased from -0.1 -> -0.5 to encourage only cutting connective tissue
             "worspace_violation": -0.0,
             "state_limits_violation": -0.0,
             "rcm_violation_xyz": -0.0,
             "rcm_violation_rpy": -0.0,
             "collision_with_board": -0.1,
-            "successful_task": 50.0,
+            "successful_task": 100.0, #Also increase successful task reward to prevent gaming the system if cutting connective tissue can get you more than 50 points 50.0->100.0
         },
         "camera_reset_noise": None,  # TODO?
         "with_board_collision": True,

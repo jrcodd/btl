@@ -4,6 +4,7 @@ from pathlib import Path
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import VecFrameStack
+from stable_baselines3.common.evaluation import evaluate_policy
 from sofa_env.scenes.tissue_dissection.tissue_dissection_env import (
     RenderMode, ObservationType, TissueDissectionEnv, ActionType
 )
@@ -20,7 +21,7 @@ env_kwargs = {
     "frame_skip": 10,
     "settle_steps": 10,
     "render_mode": render_mode,
-    "image_shape": (800, 800),
+    "image_shape": (600, 600),
     "reward_amount_dict": {
         "unstable_deformation": -1.0,
         "distance_cauter_border_point": -10.0,
@@ -36,7 +37,7 @@ env_kwargs = {
 
 env = make_vec_env(lambda: TissueDissectionEnv(**env_kwargs), n_envs=1)
 env = VecFrameStack(env, n_stack=4)
-model_path = "runs/PPO_STATE_2rows_Falsevis_1/PPO_STATE_2rows_Falsevis_1saved_model.pth"
+model_path = "runs/image_based/PPO_STATE_2rows_Falsevis_1saved_model.pth"
 model = PPO.load(model_path, env=env)
 
 print("Running simulation and collecting frames...")
@@ -44,7 +45,8 @@ obs = env.reset()
 done = False
 frames = []
 max_steps = 500  
-
+evaluate_policy(model, env, n_eval_episodes=10, render=False)
+'''
 for step in range(max_steps):
     action, _states = model.predict(obs, deterministic=True)
     obs, reward, done, info = env.step(action)
@@ -55,13 +57,13 @@ for step in range(max_steps):
     if done.any():
         print("Episode finished.")
         break
-
+'''
 env.close()
-
+'''
 if frames:
     output_directory = Path("runs/videos")
     output_directory.mkdir(exist_ok=True)
-    video_path = output_directory / "tissue_dissection_video.mp4"
+    video_path = output_directory / "tissue_dissection_image_based_video.mp4"
     height, width, _ = frames[0].shape
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 30 
@@ -76,3 +78,4 @@ if frames:
     print("Video saved successfully.")
 else:
     print("No frames were collected. No video will be saved.")
+'''

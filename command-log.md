@@ -333,6 +333,13 @@ cmake -Wno-dev -S $FOLDER_SRC -B $FOLDER_TARGET -DCMAKE_POLICY_VERSION_MINIMUM=3
 -DSOFA_BUILD_SOFACOMPONENT_USERINTERFACE_CONFIGURATIONSETTING=ON \
 
 ls $FOLDER_TARGET/lib/libSofa.Component.AnimationLoop.*
+FOLDER_SRC=~/NewVolume/Jackson/sofa/src
+FOLDER_TARGET=~/NewVolume/Jackson/sofa/build
+FOLDER_SP3=$FOLDER_SRC/applications/plugins/SofaPython3
+
+PYTHON_PKG_PATH=$(python3 -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
+PYTHON_EXE=$(which python3)
+PYTHON_ROOT_DIR=$CONDA_PREFIX
 
 SOFA_ROOT=~/NewVolume/Jackson/lap_gym/sofa_env/SOFA
 SOFAPYTHON3_ROOT=$SOFA_ROOT/plugins/SofaPython3
