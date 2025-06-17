@@ -3,9 +3,9 @@ from sofa_env.scenes.tissue_dissection.tissue_dissection_env import (
     RenderMode, ObservationType, TissueDissectionEnv, ActionType
 )
 
-parameters = ["STATE", "2", "False", "False"]
+parameters = ["RGBD", "2", "False", "False"]
 observation_type = ObservationType[parameters[0]]
-render_mode = RenderMode.HEADLESS
+render_mode = RenderMode.HUMAN	
 
 env_kwargs = {
     "image_shape": (64, 64),
@@ -39,7 +39,7 @@ env_kwargs = {
 dummy_env = TissueDissectionEnv(**env_kwargs)
 print("Observation space shape:", dummy_env.observation_space.shape)
 
-model_path = "runs/PPO_STATE_2rows_Falsevis_1/PPO_STATE_2rows_Falsevis_1saved_model.pth"
+model_path = "/hpc/home/klc130/work/setup/btl/sofa_zoo/sofa_zoo/envs/tissue_dissection/runs/image_based1M.pth"
 model = PPO.load(model_path)
 
 # Check if loaded model's obs space matches the dummy
@@ -47,12 +47,24 @@ if model.observation_space.shape != dummy_env.observation_space.shape:
     raise ValueError(f"Model expects {model.observation_space.shape} but env has {dummy_env.observation_space.shape}")
 
 # Wrap env to match training conditions
-from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.monitor import Monitor
-vec_env = DummyVecEnv([lambda: Monitor(dummy_env)])
+
+model, callback = configure_learning_pipeline(
+        env_class=TissueDissectionEnv,
+        env_kwargs=env_kwargs,
+        pipeline_config=config,
+        monitoring_keywords=info_keywords,
+        normalize_observations=False if image_based else True,
+        algo_class=PPO,
+        algo_kwargs=ppo_kwargs,
+        render=add_render_callback,
+        reward_clip=reward_clip,
+        normalize_reward=normalize_reward,
+        use_watchdog_vec_env=True,
+        watchdog_vec_env_timeout=30.0,
+        reset_process_on_env_reset=True,
+    )
 
 # Reload model with the correct env wrapper
-model.set_env(vec_env)
 
 obs = vec_env.reset()
 done = False

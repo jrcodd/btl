@@ -3,8 +3,8 @@ from sofa_zoo.models.cnn import ActorCriticDoubleNatureCnnPolicy
 from sofa_zoo.common.schedules import linear_schedule
 
 CONFIG = {
-    "total_timesteps": int(1e6), # 10 million timesteps is default going to 1 million for testing purposes
-    "number_of_envs": 8, #going back to 8 since pc froze at 14
+    "total_timesteps": int(1e7), # 10 million timesteps is default going to 1 million for testing purposes
+    "number_of_envs": 10, #going back to 8 since pc froze at 14
     "checkpoint_distance": int(5e5),
     "frame_stack": 4, #4 is default will try to stack more frames to see if it works better in the future
     "videos_per_run": 0,
