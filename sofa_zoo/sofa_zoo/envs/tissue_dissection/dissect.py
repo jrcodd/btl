@@ -54,7 +54,6 @@ def setup_environment(use_wandb: bool = False):
         ppo_kwargs = PPO_KWARGS["image_based"]
     else:
         ppo_kwargs = PPO_KWARGS["state_based"]
-    
     info_keywords = [
         "ret", "ret_col_wit_boa", "ret_cut_con_tis", "ret_cut_tis",
         "ret_del_dis_cau_bor_poi", "ret_dis_cau_bor_poi", "ret_num_tet_in_con_tis",
@@ -103,14 +102,20 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     run_name = f"dissect_{int(time.time())}"
-
+    if args.track:
+        import wandb
+        wandb.init(
+            project=args.wandb_project_name,
+            entity=args.wandb_entity,
+            name=run_name,
+            sync_tensorboard=True,
+            monitor_gym=True,
+            save_code=True,
+    )
     model, callback = setup_environment(args.track)
     model.learn(
         total_timesteps=args.total_timesteps,
         callback=callback,
         tb_log_name=run_name,
-        learning_rate=args.learning_rate,
-        torch_deterministic=args.torch_deterministic,
-        cuda=args.cuda,
     )
     print(f"Experiment logged to runs/{run_name}")
