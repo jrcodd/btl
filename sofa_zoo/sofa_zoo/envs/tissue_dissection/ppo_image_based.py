@@ -23,7 +23,7 @@ if __name__ == "__main__":
     env_kwargs = {
         # 3. Define the image resolution. (64, 64) is a common size for faster training.
         "image_shape": (64, 64),
-        "window_size": (600, 600),
+        "window_size": (400, 400),
         "observation_type": observation_type,
         "action_type": ActionType.CONTINUOUS if continuous_actions else ActionType.DISCRETE,
         "time_step": 0.01,
@@ -32,14 +32,14 @@ if __name__ == "__main__":
         "render_mode": render_mode, 
         "reward_amount_dict": {
             "unstable_deformation": -10.0, #original 1.0
-            "distance_cauter_border_point": -10.0, #original -10.0
-            "delta_distance_cauter_border_point": -10.0, #original -10.0
-            "cut_connective_tissue": 3.0, #original 0.5
-            "cut_tissue": -2.0, #original -0.1
+            "distance_cauter_border_point": -1.0, #original -10.0
+            "delta_distance_cauter_border_point": -1.0, #original -10.0
+            "cut_connective_tissue": 5.0, #original 0.5
+            "cut_tissue": -3.5, #original -0.1
             "worspace_violation": -0.0, #original -0.0
             "state_limits_violation": -0.0, #original -0.0
-            "rcm_violation_xyz": -0.3, #original -0.0
-            "rcm_violation_rpy": -0.3, #original -0.0
+            "rcm_violation_xyz": -0.1, #original -0.0
+            "rcm_violation_rpy": -0.1, #original -0.0
             "collision_with_board": -0.1, #original -0.1
             "successful_task": 75.0, #original 50.0
         },
@@ -92,5 +92,5 @@ if __name__ == "__main__":
         tb_log_name= f"PPO_{observation_type.name}_{parameters[1]}rows_{parameters[2]}vis",
     )
     
-    log_path = str(model.logger.dir)
+    
     model.save(log_path + "saved_model.pth")
