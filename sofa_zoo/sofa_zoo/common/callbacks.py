@@ -16,7 +16,7 @@ class EpisodeInfoLoggerCallback(BaseCallback):
     :param exclude_keys: (List[str]) keys from episode infos to exclude. By default, excludes reward and legth (already logged by OnPolicyAlgorithm) and time
     """
 
-    def __init__(self, verbose: int = 0, exclude_keys: List[str] = ["r", "l", "t"]):
+    def __init__(self, verbose: int = 0, exclude_keys: List[str] = ["l", "t"]):
         super(EpisodeInfoLoggerCallback, self).__init__(verbose)
         self.exclude_keys = exclude_keys
 
