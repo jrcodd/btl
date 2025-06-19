@@ -4,7 +4,7 @@ from sofa_zoo.common.schedules import linear_schedule
 
 CONFIG = {
     "total_timesteps": int(3e6), # 3  million timesteps
-    "number_of_envs": 8,
+    "number_of_envs": 10,
     "checkpoint_distance": int(5e5),
     "frame_stack": 4, #4 is default will try to stack more frames to see if it works better in the future
     "videos_per_run": 10,
