@@ -264,7 +264,7 @@ def createScene(
     # Tissue
     ########
     # Create the mesh file for tissue
-    tissue_mesh_path = "/work/klc130/tmp/tissue_mesh.vtk"
+    tissue_mesh_path = "/hpc/home/klc130/work/tmp/tissue_mesh.vtk"
     
     tissue = CuttableDeformableObject(
         parent_node=scene_node,
@@ -293,7 +293,7 @@ def createScene(
     ############################################
     # Connective Tissue between Tissue and Board
     ############################################
-    connective_mesh_path = "/work/klc130/tmp/connective_tissue_mesh.vtk"
+    connective_mesh_path = "/hpc/home/klc130/work/tmp/connective_tissue_mesh.vtk"
 
 
     connective_tissue = CuttableDeformableObject(
