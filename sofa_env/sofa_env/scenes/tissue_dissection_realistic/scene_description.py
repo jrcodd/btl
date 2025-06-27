@@ -65,7 +65,7 @@ def create_temp_mesh(positions, tetrahedra):
         assert np.all(tetrahedra < positions.shape[0])
         assert np.all(tetrahedra >= 0)
         assert np.all([len(set(tet)) == 4 for tet in tetrahedra])
-        tempfile.flush()  # Ensure the file is written before returning
+        tempfile.close()  # Ensure the file is written before returning
         return tmpfile.name
 
 
