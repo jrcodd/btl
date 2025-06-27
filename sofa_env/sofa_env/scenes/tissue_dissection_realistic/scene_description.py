@@ -53,7 +53,6 @@ HERE = Path(__file__).resolve().parent
 INSTRUMENT_MESH_DIR = HERE.parent.parent.parent / "assets/meshes/instruments"
 MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
-# Helper function to create a temporary mesh file
 import gmsh
 import numpy as np
 
@@ -61,21 +60,27 @@ def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
 
-    # Add all points (tags start at 1)
+    # Add all points
     point_tags = []
     for i, (x, y, z) in enumerate(positions):
         tag = gmsh.model.geo.addPoint(x, y, z)
         point_tags.append(tag)
     gmsh.model.geo.synchronize()
 
-    # Add all tetrahedra as 3D elements (using the mesh API)
+    # Add all tetrahedra as elements
     element_type = 4  # 4-node tetrahedron
-    # Convert to 1-based indices
-    tet_nodes = np.array(tetrahedra) + 1
-    # Flatten and convert to list of node tags
+    tet_nodes = np.array(tetrahedra) + 1  # Gmsh uses 1-based indices
     node_tags = tet_nodes.flatten().tolist()
-    # Add elements (dim=3, element_type=4, tag=0, node_tags)
-    gmsh.model.mesh.addElementsByType(0, element_type, [], node_tags)
+
+    # Create a volume entity (this is a workaround for the API)
+    # In Gmsh, you can't directly create a volume from points; you need to create a surface first, then a volume.
+    # For a pure tetrahedral mesh, this is not straightforward, but you can add a dummy volume tag.
+    # The correct way is to use the "discrete" API for unstructured meshes:
+    # First, create a discrete entity:
+    dim = 3
+    tag = gmsh.model.addDiscreteEntity(dim)
+    # Now add the elements to this entity:
+    gmsh.model.mesh.addElementsByType(tag, element_type, [], node_tags)
 
     # Optional: sanity checks
     print("positions.shape:", positions.shape)
