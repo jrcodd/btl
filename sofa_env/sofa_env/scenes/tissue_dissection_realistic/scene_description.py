@@ -63,7 +63,7 @@ def create_temp_mesh(positions, tetrahedra):
     # Add all points (nodes)
     for i, (x, y, z) in enumerate(positions):
         gmsh.model.geo.addPoint(x, y, z)
-    gmsh.model.geo.synchronize()
+    gmsh.model.geo.synchronize()  # This is crucial!
 
     # Create a discrete volume entity
     dim = 3
@@ -73,9 +73,16 @@ def create_temp_mesh(positions, tetrahedra):
     element_type = 4  # 4-node tetrahedron
     tet_nodes = np.array(tetrahedra) + 1  # Gmsh uses 1-based indices
     node_tags = tet_nodes.flatten().tolist()
+
+    # Double-check node tags are valid
+    min_node = min(node_tags)
+    max_node = max(node_tags)
+    if min_node < 1 or max_node > len(positions):
+        raise ValueError(f"Node tags out of range: min={min_node}, max={max_node}, expected 1-{len(positions)}")
+
     gmsh.model.mesh.addElementsByType(tag, element_type, [], node_tags)
 
-    # Sanity checks (optional)
+    # Optional: sanity checks
     print("positions.shape:", positions.shape)
     print("tetrahedra.shape:", tetrahedra.shape)
     print("positions[:5]:", positions[:5])
@@ -92,7 +99,6 @@ def create_temp_mesh(positions, tetrahedra):
         print(f"Temporary mesh file created at: {tmpfile.name}")
         return tmpfile.name
     gmsh.finalize()
-
 
 
 
