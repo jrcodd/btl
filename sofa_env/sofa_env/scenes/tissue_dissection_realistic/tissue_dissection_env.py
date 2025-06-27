@@ -546,18 +546,6 @@ class TissueDissectionEnv(SofaEnv):
 
         return self._get_observation(maybe_rgb_observation=self._maybe_update_rgb_buffer()), {}
 
-#to reset without printing logs/warnings
-@contextmanager
-    def suppress_stdout():
-        """A context manager to temporarily redirect stdout to devnull."""
-        with open(os.devnull, "w") as devnull:
-            old_stdout = sys.stdout
-            sys.stdout = devnull
-            try:
-                yield
-            finally:
-                sys.stdout = old_stdout # Restore original stdout
-
 if __name__ == "__main__":
     import pprint
     import time

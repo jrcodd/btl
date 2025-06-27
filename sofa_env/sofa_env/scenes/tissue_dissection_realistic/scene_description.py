@@ -176,8 +176,6 @@ def createScene(
         num_x=discretization_x,
         num_y=discretization_y,
         num_z=discretization_z,
-        # Add dynamic topology support
-        use_dynamic_topology=True,  # This parameter may vary based on your SOFA version
     )
 
     point_distance_y = length_y / discretization_y
@@ -192,9 +190,7 @@ def createScene(
         ymin=point_distance_y * (discretization_y - points_offset_in_y - rows_to_cut),
         ymax=length_y - point_distance_y * points_offset_in_y,
         zmin=0.0,
-        zmax=0.1,
-        # Add dynamic topology support
-        use_dynamic_topology=True,  # This parameter may vary based on your SOFA version
+        zmax=0.1
     )
     #######
     # Board
