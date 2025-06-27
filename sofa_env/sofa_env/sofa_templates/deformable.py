@@ -346,7 +346,9 @@ class CuttableDeformableObject:
         # Add a force field to the object that determines its FEM behavior
         if material is None:
             self.material = Material()
-
+        else:
+            self.material = material
+            
         if add_deformation_model_func is add_fem_force_field_from_material:
             self.deformation_force_field = add_deformation_model_func(
                 attached_to=self.node,
