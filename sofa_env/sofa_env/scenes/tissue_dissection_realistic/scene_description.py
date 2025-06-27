@@ -7,7 +7,7 @@ from functools import partial
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Union
 
-from sofa_env.sofa_templates.deformable import CuttableDeformableObject, DEFORMABLE_PLUGIN_LIST
+from sofa_env.sofa_templates.deformable import SimpleDeformableObject, DEFORMABLE_PLUGIN_LIST
 from sofa_env.sofa_templates.camera import Camera, CAMERA_PLUGIN_LIST
 from sofa_env.sofa_templates.mappings import MappingType, MAPPING_PLUGIN_LIST
 from sofa_env.sofa_templates.scene_header import AnimationLoopType, IntersectionMethod, add_scene_header, VISUAL_STYLES, SCENE_HEADER_PLUGIN_LIST
@@ -22,7 +22,6 @@ LENGTH_UNIT = "mm"
 TIME_UNIT = "s"
 WEIGHT_UNIT = "kg"
 
-# Modified PLUGIN_LIST to include cutting/topology modification plugins
 PLUGIN_LIST = (
     [
         "SofaPython3",
@@ -32,12 +31,6 @@ PLUGIN_LIST = (
         "Sofa.Component.StateContainer",  # [MechanicalObject]
         "Sofa.Component.Mapping.NonLinear",  # [RigidMapping]
         "SofaCarving",  # [CarvingManager]
-        # Additional plugins for CuttableDeformableObject
-        "Sofa.Component.Topology.Container.Dynamic",  # [TetrahedronSetTopologyContainer, TriangleSetTopologyContainer]
-        "Sofa.Component.Topology.Mapping",  # [Tetra2TriangleTopologicalMapping]
-        "Sofa.Component.Topology.Utility",  # [TopologicalChangeProcessor]
-        "Sofa.Component.Engine.Select",  # [BoxROI] - if not already included
-        "Sofa.Component.Collision.Geometry",  # [TriangleCollisionModel, PointCollisionModel, LineCollisionModel]
     ]
     + SCENE_HEADER_PLUGIN_LIST
     + TOPOLOGY_PLUGIN_LIST
@@ -53,6 +46,23 @@ HERE = Path(__file__).resolve().parent
 INSTRUMENT_MESH_DIR = HERE.parent.parent.parent / "assets/meshes/instruments"
 MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
+import tempfile
+import meshio
+
+# Helper function to create a temporary mesh file
+def create_temp_mesh(positions, tetrahedra):
+    with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
+        mesh = meshio.Mesh(points=positions, cells=[("tetra", tetrahedra)])
+        mesh.write(tmpfile.name)
+        return tmpfile.name
+
+
+
+# Import and use CuttableDeformableObject
+from sofa_env.sofa_templates.deformable import CuttableDeformableObject, Material
+from sofa_env.sofa_templates.forcefields import add_tetrahedron_fem_force_field
+from sofa_env.sofa_templates.collision import add_triangle_collision_model
+from functools import partial
 
 def createScene(
     root_node: Sofa.Core.Node,
@@ -163,7 +173,6 @@ def createScene(
 
     scene_node = root_node.addChild("scene")
 
-    # Modified topology creation to use dynamic topologies for cutting support
     tissue_grid_topology, _, tissue_tetrahedron_topology = create_initialized_grid(
         attached_to=scene_node,
         name="tissue_topology",
@@ -190,8 +199,9 @@ def createScene(
         ymin=point_distance_y * (discretization_y - points_offset_in_y - rows_to_cut),
         ymax=length_y - point_distance_y * points_offset_in_y,
         zmin=0.0,
-        zmax=0.1
+        zmax=0.1,
     )
+
     #######
     # Board
     #######
@@ -243,33 +253,26 @@ def createScene(
     grid_node.addObject("RigidMapping")
 
     ########
-    # Tissue (Modified to use CuttableDeformableObject)
+    # Tissue
     ########
+    # Create the mesh file for tissue
+    tissue_mesh_path = create_temp_mesh(
+        tissue_grid_topology.position.array().copy(),
+        tissue_tetrahedron_topology.tetrahedra.array().copy()
+    )
+    
     tissue = CuttableDeformableObject(
         parent_node=scene_node,
         name="tissue",
-        positions=tissue_grid_topology.position.array().copy(),
-        tetrahedra=tissue_tetrahedron_topology.tetrahedra.array().copy(),
-        young_modulus=5e2,
-        poisson_ratio=0.0,
+        volume_mesh_path=tissue_mesh_path,
         total_mass=100.0,
-        show_object=debug_rendering,
-        show_object_scale=2.0,
-        color=(1.0, 0.0, 0.0),
+        material=Material(young_modulus=5e2, poisson_ratio=0.0),
+        add_deformation_model_func=add_tetrahedron_fem_force_field,
+        add_collision_model_func=partial(add_triangle_collision_model, group=0),
         collision_group=0,
-        animation_loop_type=animation_loop,
-        # Additional parameters for CuttableDeformableObject
-        cut_threshold=0.5,  # Threshold for cutting
-        enable_cutting=True,
-        fracture_stiffness=1e3,  # Stiffness of fracture springs
+        animation_loop_type=animation_loop
     )
-    
-    # Add cutting-specific components
-    tissue.node.addObject("TopologicalChangeProcessor")
-    tissue.node.addObject("TriangleSetGeometryAlgorithms")
-    tissue.node.addObject("TetrahedronSetGeometryAlgorithms")
-    
-    # Damping and force fields
+
     tissue.node.addObject("UniformVelocityDampingForceField", dampingCoefficient=0.8, implicit=True, rayleighStiffness=0.0)
     tissue.node.addObject(
         "PlaneForceField",
@@ -285,31 +288,25 @@ def createScene(
     retraction_force = tissue.node.addObject("ConstantForceField", totalForce=[0, -1e5, 1e5], indices=grasp_box.indices.getLinkPath(), showArrowSize=1e-3)
 
     ############################################
-    # Connective Tissue between Tissue and Board (Modified to use CuttableDeformableObject)
+    # Connective Tissue between Tissue and Board
     ############################################
+    connective_mesh_path = create_temp_mesh(
+    connective_tissue_grid_topology.position.array().copy(),
+    connective_tissue_tetrahedron_topology.tetrahedra.array().copy()
+    )
+
     connective_tissue = CuttableDeformableObject(
         parent_node=scene_node,
         name="connective_tissue",
-        positions=connective_tissue_grid_topology.position.array().copy(),
-        tetrahedra=connective_tissue_tetrahedron_topology.tetrahedra.array().copy(),
-        young_modulus=5.0,
-        poisson_ratio=0.0,
+        volume_mesh_path=connective_mesh_path,
         total_mass=0.5,
-        show_object=debug_rendering,
-        show_object_scale=2.0,
-        color=(0.0, 0.0, 1.0),
+        material=Material(young_modulus=5.0, poisson_ratio=0.0),
+        add_deformation_model_func=add_tetrahedron_fem_force_field,
+        add_collision_model_func=partial(add_triangle_collision_model, group=0),
         collision_group=0,
-        animation_loop_type=animation_loop,
-        # Additional parameters for CuttableDeformableObject
-        cut_threshold=0.3,  # Lower threshold for easier cutting of connective tissue
-        enable_cutting=True,
-        fracture_stiffness=5e2,  # Lower stiffness for softer connective tissue
+        animation_loop_type=animation_loop
     )
-    
-    # Add cutting-specific components for connective tissue
-    connective_tissue.node.addObject("TopologicalChangeProcessor")
-    connective_tissue.node.addObject("TriangleSetGeometryAlgorithms")
-    connective_tissue.node.addObject("TetrahedronSetGeometryAlgorithms")
+
 
     indices_connective_tissue_to_board = list(range(int(discretization_z * discretization_x * rows_to_cut / 2)))
     indices_connective_tissue_to_tissue = list(range(indices_connective_tissue_to_board[-1] + 1, int(discretization_z * discretization_x * rows_to_cut)))
@@ -344,11 +341,6 @@ def createScene(
         second_point=indices_connective_tissue_to_tissue,
     )
 
-    # Optional: Add cutting tool/cautery device interaction
-    # You'll need to add this when you implement the cautery tool
-    # cautery_tool.node.addObject("CuttingManager", 
-    #                            target=connective_tissue.node.MechanicalObject.getLinkPath(),
-    #                            cutting_distance=2.0)
     ########
     # Cauter
     ########
