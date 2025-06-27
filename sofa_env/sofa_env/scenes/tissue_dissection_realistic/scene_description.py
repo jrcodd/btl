@@ -55,29 +55,28 @@ MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
 # Helper function to create a temporary mesh file
 import gmsh
-import tempfile
 import numpy as np
 
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
-    
-    # Add nodes
+
+    # Add all points (tags start at 1)
+    point_tags = []
     for i, (x, y, z) in enumerate(positions):
-        gmsh.model.geo.addPoint(x, y, z, tag=i+1)  # Gmsh tags start at 1
-    
-    # Add tetrahedra
-    for tet in tetrahedra:
-        # Add each tetrahedron as a 4-node element
-        # Gmsh uses tags starting at 1, so add 1 to each index
-        gmsh.model.geo.addTet(tet[0]+1, tet[1]+1, tet[2]+1, tet[3]+1)
-    
-    # Synchronize before meshing (not strictly necessary here, but good practice)
+        tag = gmsh.model.geo.addPoint(x, y, z)
+        point_tags.append(tag)
     gmsh.model.geo.synchronize()
-    
-    # Generate the mesh (this is a bit redundant since we already defined the elements)
-    gmsh.model.mesh.generate(3)  # 3D mesh
-    
+
+    # Add all tetrahedra as 3D elements (using the mesh API)
+    element_type = 4  # 4-node tetrahedron
+    # Convert to 1-based indices
+    tet_nodes = np.array(tetrahedra) + 1
+    # Flatten and convert to list of node tags
+    node_tags = tet_nodes.flatten().tolist()
+    # Add elements (dim=3, element_type=4, tag=0, node_tags)
+    gmsh.model.mesh.addElementsByType(0, element_type, [], node_tags)
+
     # Optional: sanity checks
     print("positions.shape:", positions.shape)
     print("tetrahedra.shape:", tetrahedra.shape)
@@ -86,8 +85,9 @@ def create_temp_mesh(positions, tetrahedra):
     assert np.all(tetrahedra < positions.shape[0])
     assert np.all(tetrahedra >= 0)
     assert np.all([len(set(tet)) == 4 for tet in tetrahedra])
-    
+
     # Write to a temporary file
+    import tempfile
     tempfile.tempdir = '/work/klc130/tmp'
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         gmsh.write(tmpfile.name)
