@@ -264,10 +264,7 @@ def createScene(
     # Tissue
     ########
     # Create the mesh file for tissue
-    tissue_mesh_path = create_temp_mesh(
-        tissue_grid_topology.position.array().copy(),
-        tissue_tetrahedron_topology.tetrahedra.array().copy()
-    )
+    tissue_mesh_path = "/work/klc130/tmp/tissue_mesh.vtk"
     
     tissue = CuttableDeformableObject(
         parent_node=scene_node,
@@ -296,10 +293,8 @@ def createScene(
     ############################################
     # Connective Tissue between Tissue and Board
     ############################################
-    connective_mesh_path = create_temp_mesh(
-    connective_tissue_grid_topology.position.array().copy(),
-    connective_tissue_tetrahedron_topology.tetrahedra.array().copy()
-    )
+    connective_mesh_path = "/work/klc130/tmp/connective_tissue_mesh.vtk"
+
 
     connective_tissue = CuttableDeformableObject(
         parent_node=scene_node,
