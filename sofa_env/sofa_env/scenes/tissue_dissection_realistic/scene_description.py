@@ -58,6 +58,10 @@ def create_temp_mesh(positions, tetrahedra):
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         mesh = meshio.Mesh(points=positions, cells=[("tetra", tetrahedra)])
         mesh.write(tmpfile.name)
+        print("positions.shape:", positions.shape)
+        print("tetrahedra.shape:", tetrahedra.shape)
+        print("positions[:5]:", positions[:5])
+        print("tetrahedra[:5]:", tetrahedra[:5])
         return tmpfile.name
 
 
