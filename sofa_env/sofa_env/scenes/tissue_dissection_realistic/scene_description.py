@@ -13,6 +13,13 @@ from sofa_env.sofa_templates.mappings import MappingType, MAPPING_PLUGIN_LIST
 from sofa_env.sofa_templates.scene_header import AnimationLoopType, IntersectionMethod, add_scene_header, VISUAL_STYLES, SCENE_HEADER_PLUGIN_LIST
 from sofa_env.sofa_templates.topology import create_initialized_grid, TOPOLOGY_PLUGIN_LIST
 from sofa_env.sofa_templates.visual import add_visual_model, VISUAL_PLUGIN_LIST
+import tempfile
+import meshio
+from sofa_env.sofa_templates.deformable import CuttableDeformableObject, Material
+from sofa_env.sofa_templates.materials import add_fem_force_field_from_material
+from sofa_env.sofa_templates.collision import add_triangle_collision_model
+from functools import partial
+
 
 from sofa_env.utils.camera import determine_look_at
 
@@ -46,9 +53,6 @@ HERE = Path(__file__).resolve().parent
 INSTRUMENT_MESH_DIR = HERE.parent.parent.parent / "assets/meshes/instruments"
 MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
-import tempfile
-import meshio
-
 # Helper function to create a temporary mesh file
 def create_temp_mesh(positions, tetrahedra):
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
@@ -58,11 +62,6 @@ def create_temp_mesh(positions, tetrahedra):
 
 
 
-# Import and use CuttableDeformableObject
-from sofa_env.sofa_templates.deformable import CuttableDeformableObject, Material
-from sofa_env.sofa_templates.forcefields import add_tetrahedron_fem_force_field
-from sofa_env.sofa_templates.collision import add_triangle_collision_model
-from functools import partial
 
 def createScene(
     root_node: Sofa.Core.Node,
@@ -267,7 +266,7 @@ def createScene(
         volume_mesh_path=tissue_mesh_path,
         total_mass=100.0,
         material=Material(young_modulus=5e2, poisson_ratio=0.0),
-        add_deformation_model_func=add_tetrahedron_fem_force_field,
+        add_deformation_model_func=add_fem_force_field_from_material,
         add_collision_model_func=partial(add_triangle_collision_model, group=0),
         collision_group=0,
         animation_loop_type=animation_loop
@@ -301,7 +300,7 @@ def createScene(
         volume_mesh_path=connective_mesh_path,
         total_mass=0.5,
         material=Material(young_modulus=5.0, poisson_ratio=0.0),
-        add_deformation_model_func=add_tetrahedron_fem_force_field,
+        add_deformation_model_func=add_fem_force_field_from_material,
         add_collision_model_func=partial(add_triangle_collision_model, group=0),
         collision_group=0,
         animation_loop_type=animation_loop
