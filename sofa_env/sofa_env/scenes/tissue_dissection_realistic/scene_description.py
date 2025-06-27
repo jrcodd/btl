@@ -52,54 +52,39 @@ PLUGIN_LIST = (
 HERE = Path(__file__).resolve().parent
 INSTRUMENT_MESH_DIR = HERE.parent.parent.parent / "assets/meshes/instruments"
 MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
-
 import gmsh
 import numpy as np
+import tempfile
 
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
 
-    # Add all points (nodes)
-    for i, (x, y, z) in enumerate(positions):
-        gmsh.model.geo.addPoint(x, y, z)
-    gmsh.model.geo.synchronize()  # This is crucial!
-
-    # Create a discrete volume entity
+    # 1. Create a discrete volume entity
     dim = 3
     tag = gmsh.model.addDiscreteEntity(dim)
 
-    # Add tetrahedral elements to the discrete volume
+    # 2. Set mesh nodes for this entity
+    # Gmsh uses 1-based node tags
+    num_nodes = positions.shape[0]
+    node_tags = np.arange(1, num_nodes + 1, dtype=np.int32)
+    gmsh.model.mesh.setNodes(dim, tag, node_tags, positions.flatten())
+
+    # 3. Add tetrahedral elements
     element_type = 4  # 4-node tetrahedron
-    tet_nodes = np.array(tetrahedra) + 1  # Gmsh uses 1-based indices
-    node_tags = tet_nodes.flatten().tolist()
+    tet_nodes = np.array(tetrahedra) + 1  # 1-based indices
+    element_tags = np.arange(1, len(tet_nodes) + 1, dtype=np.int32)
+    gmsh.model.mesh.addElements(dim, tag, [element_type], [element_tags], [tet_nodes.flatten()])
 
-    # Double-check node tags are valid
-    min_node = min(node_tags)
-    max_node = max(node_tags)
-    if min_node < 1 or max_node > len(positions):
-        raise ValueError(f"Node tags out of range: min={min_node}, max={max_node}, expected 1-{len(positions)}")
-
-    gmsh.model.mesh.addElementsByType(tag, element_type, [], node_tags)
-
-    # Optional: sanity checks
-    print("positions.shape:", positions.shape)
-    print("tetrahedra.shape:", tetrahedra.shape)
-    print("positions[:5]:", positions[:5])
-    print("tetrahedra[:5]:", tetrahedra[:5])
-    assert np.all(tetrahedra < positions.shape[0])
-    assert np.all(tetrahedra >= 0)
-    assert np.all([len(set(tet)) == 4 for tet in tetrahedra])
-
-    # Write to a temporary file
-    import tempfile
+    # 4. Write to a temporary file
     tempfile.tempdir = '/work/klc130/tmp'
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         gmsh.write(tmpfile.name)
         print(f"Temporary mesh file created at: {tmpfile.name}")
-        return tmpfile.name
-    gmsh.finalize()
+        mesh_path = tmpfile.name
 
+    gmsh.finalize()
+    return mesh_path
 
 
 def createScene(
