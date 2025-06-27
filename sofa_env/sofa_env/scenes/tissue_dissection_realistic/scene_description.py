@@ -54,18 +54,43 @@ INSTRUMENT_MESH_DIR = HERE.parent.parent.parent / "assets/meshes/instruments"
 MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
 # Helper function to create a temporary mesh file
+import gmsh
+import tempfile
+import numpy as np
+
 def create_temp_mesh(positions, tetrahedra):
+    gmsh.initialize()
+    gmsh.model.add("my_mesh")
+    
+    # Add nodes
+    for i, (x, y, z) in enumerate(positions):
+        gmsh.model.geo.addPoint(x, y, z, tag=i+1)  # Gmsh tags start at 1
+    
+    # Add tetrahedra
+    for tet in tetrahedra:
+        # Add each tetrahedron as a 4-node element
+        # Gmsh uses tags starting at 1, so add 1 to each index
+        gmsh.model.geo.addTet(tet[0]+1, tet[1]+1, tet[2]+1, tet[3]+1)
+    
+    # Synchronize before meshing (not strictly necessary here, but good practice)
+    gmsh.model.geo.synchronize()
+    
+    # Generate the mesh (this is a bit redundant since we already defined the elements)
+    gmsh.model.mesh.generate(3)  # 3D mesh
+    
+    # Optional: sanity checks
+    print("positions.shape:", positions.shape)
+    print("tetrahedra.shape:", tetrahedra.shape)
+    print("positions[:5]:", positions[:5])
+    print("tetrahedra[:5]:", tetrahedra[:5])
+    assert np.all(tetrahedra < positions.shape[0])
+    assert np.all(tetrahedra >= 0)
+    assert np.all([len(set(tet)) == 4 for tet in tetrahedra])
+    
+    # Write to a temporary file
     tempfile.tempdir = '/work/klc130/tmp'
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
-        mesh = meshio.Mesh(points=positions, cells=[("tetra", tetrahedra)])
-        mesh.write(tmpfile.name)
-        print("positions.shape:", positions.shape)
-        print("tetrahedra.shape:", tetrahedra.shape)
-        print("positions[:5]:", positions[:5])
-        print("tetrahedra[:5]:", tetrahedra[:5])
-        assert np.all(tetrahedra < positions.shape[0])
-        assert np.all(tetrahedra >= 0)
-        assert np.all([len(set(tet)) == 4 for tet in tetrahedra])
+        gmsh.write(tmpfile.name)
         print(f"Temporary mesh file created at: {tmpfile.name}")
         return tmpfile.name
 
@@ -264,8 +289,11 @@ def createScene(
     # Tissue
     ########
     # Create the mesh file for tissue
-    tissue_mesh_path = "/hpc/home/klc130/work/tmp/tissue_mesh.vtk"
-    
+    #tissue_mesh_path = "/hpc/home/klc130/work/tmp/tissue_mesh.vtk"
+    tissue_mesh_path = create_temp_mesh(
+    tissue_grid_topology.position.array().copy(),
+    tissue_tetrahedron_topology.tetrahedra.array().copy()
+    )
     tissue = CuttableDeformableObject(
         parent_node=scene_node,
         name="tissue",
@@ -293,8 +321,11 @@ def createScene(
     ############################################
     # Connective Tissue between Tissue and Board
     ############################################
-    connective_mesh_path = "/hpc/home/klc130/work/tmp/connective_tissue_mesh.vtk"
-
+    #connective_mesh_path = "/hpc/home/klc130/work/tmp/connective_tissue_mesh.vtk"
+    connective_mesh_path = create_temp_mesh(
+        connective_tissue_grid_topology.position.array().copy(),
+        connective_tissue_tetrahedron_topology.tetrahedra.array().copy()
+    )
 
     connective_tissue = CuttableDeformableObject(
         parent_node=scene_node,
