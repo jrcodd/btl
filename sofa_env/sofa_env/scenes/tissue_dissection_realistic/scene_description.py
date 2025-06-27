@@ -60,6 +60,7 @@ print(f"gmsh version: {gmsh.__version__}")
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
+    print(dir(gmsh.model.mesh))
 
     # 1. Create a discrete volume entity
     dim = 3
