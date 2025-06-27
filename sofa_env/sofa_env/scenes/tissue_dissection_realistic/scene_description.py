@@ -70,8 +70,8 @@ def create_temp_mesh(positions, tetrahedra):
     # Gmsh uses 1-based node tags
     num_nodes = positions.shape[0]
     node_tags = np.arange(1, num_nodes + 1, dtype=np.int32)
-    gmsh.model.mesh.setNodes(dim, tag, node_tags, positions.flatten())
-
+    for i, (x, y, z) in enumerate(positions):
+        gmsh.model.mesh.setNode(dim, tag, i+1, [x, y, z])
     # 3. Add tetrahedral elements
     element_type = 4  # 4-node tetrahedron
     tet_nodes = np.array(tetrahedra) + 1  # 1-based indices
