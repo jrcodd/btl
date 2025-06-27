@@ -1,3 +1,4 @@
+import inspect
 import Sofa
 import Sofa.Core
 
@@ -60,7 +61,7 @@ print(f"gmsh version: {gmsh.__version__}")
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
-    print(dir(gmsh.model.mesh))
+    print(inspect.signature(gmsh.model.mesh.setNode))
 
     # 1. Create a discrete volume entity
     dim = 3
