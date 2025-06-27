@@ -56,27 +56,27 @@ MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 import gmsh
 import numpy as np
 import tempfile
-
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
     gmsh.model.add("my_mesh")
 
-    # 1. Create a discrete volume entity
     dim = 3
     tag = gmsh.model.addDiscreteEntity(dim)
 
-    # 2. Set mesh nodes
-    for i, (x, y, z) in enumerate(positions):
-        gmsh.model.mesh.setNode(dim, tag, i+1, [x, y, z], [0.0, 0.0, 0.0])
+    # Add nodes properly
+    coords = np.array(positions).T  # Shape (3, N)
+    node_tags = list(range(1, len(positions) + 1))
+    gmsh.model.mesh.addNodes(dim, tag, node_tags, coords.tolist())
 
-    # 3. Add tetrahedral elements
-    element_type = 4  # 4-node tetrahedron
-    tet_nodes = np.array(tetrahedra) + 1  # 1-based indices
-    element_tags = np.arange(1, len(tetrahedra) + 1, dtype=np.int32)
-    gmsh.model.mesh.addElements(dim, tag, [element_type], [element_tags], [tet_nodes.flatten()])
+    # Add tetrahedra
+    element_type = gmsh.model.mesh.getElementType("tetrahedron", 1)
+    element_tags = list(range(1, len(tetrahedra) + 1))
+    element_nodes = (np.array(tetrahedra) + 1).flatten().tolist()
+    gmsh.model.mesh.addElements(dim, tag, [element_type], [element_tags], [element_nodes])
 
-    # 4. Write to a temporary file
-    tempfile.tempdir = '/work/klc130/tmp'
+    gmsh.model.mesh.generate(3)  # Optional but safe
+
+    # Save to temp file
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         gmsh.write(tmpfile.name)
         print(f"Temporary mesh file created at: {tmpfile.name}")
@@ -84,7 +84,6 @@ def create_temp_mesh(positions, tetrahedra):
 
     gmsh.finalize()
     return mesh_path
-
 
 def createScene(
     root_node: Sofa.Core.Node,
