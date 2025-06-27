@@ -65,18 +65,9 @@ def create_temp_mesh(positions, tetrahedra):
     dim = 3
     tag = gmsh.model.addDiscreteEntity(dim)
 
-    # 2. Set mesh nodes (try both signatures)
-    # First, check the signature:
-    import inspect
-    sig = str(inspect.signature(gmsh.model.mesh.setNode))
-    if 'dim' in sig and 'tag' in sig:
-        # Use: (dim, tag, nodeTag, coord, parametricCoord)
-        for i, (x, y, z) in enumerate(positions):
-            gmsh.model.mesh.setNode(dim, tag, i+1, [x, y, z], [0.0, 0.0, 0.0])
-    else:
-        # Use: (nodeTag, coord, parametricCoord)
-        for i, (x, y, z) in enumerate(positions):
-            gmsh.model.mesh.setNode(i+1, [x, y, z], [0.0, 0.0, 0.0])
+    # 2. Set mesh nodes
+    for i, (x, y, z) in enumerate(positions):
+        gmsh.model.mesh.setNode(dim, tag, i+1, [x, y, z], [0.0, 0.0, 0.0])
 
     # 3. Add tetrahedral elements
     element_type = 4  # 4-node tetrahedron
