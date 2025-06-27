@@ -58,6 +58,7 @@ import numpy as np
 import tempfile
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
+    gmsh.option.setNumber("General.Terminal", 1)  # Ensure errors are printed
     gmsh.model.add("my_mesh")
 
     dim = 3
@@ -71,12 +72,14 @@ def create_temp_mesh(positions, tetrahedra):
     # Add tetrahedra
     element_type = gmsh.model.mesh.getElementType("tetrahedron", 1)
     element_tags = list(range(1, len(tetrahedra) + 1))
-    element_nodes = (np.array(tetrahedra) + 1).flatten().tolist()
+    tet = np.array(tetrahedra) + 1  # Convert to 1-based indexing
+    element_nodes = tet.flatten().tolist()
     gmsh.model.mesh.addElements(dim, tag, [element_type], [element_tags], [element_nodes])
 
-    gmsh.model.mesh.generate(3)  # Optional but safe
+    # This line is optional and only needed if you want Gmsh to do additional processing:
+    # gmsh.model.mesh.generate(3)
 
-    # Save to temp file
+    # Save to temp file (make sure to write before finalize)
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         gmsh.write(tmpfile.name)
         print(f"Temporary mesh file created at: {tmpfile.name}")
