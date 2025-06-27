@@ -17,7 +17,7 @@ import tempfile
 import meshio
 from sofa_env.sofa_templates.deformable import CuttableDeformableObject, Material
 from sofa_env.sofa_templates.materials import add_fem_force_field_from_material
-from sofa_env.sofa_templates.collision import add_triangle_collision_model
+from sofa_env.sofa_templates.collision import add_collision_model, CollisionModelType
 from functools import partial
 
 
@@ -267,7 +267,7 @@ def createScene(
         total_mass=100.0,
         material=Material(young_modulus=5e2, poisson_ratio=0.0),
         add_deformation_model_func=add_fem_force_field_from_material,
-        add_collision_model_func=partial(add_triangle_collision_model, group=0),
+        add_collision_model_func=partial(add_collision_model, group=0),
         collision_group=0,
         animation_loop_type=animation_loop
     )
@@ -301,7 +301,7 @@ def createScene(
         total_mass=0.5,
         material=Material(young_modulus=5.0, poisson_ratio=0.0),
         add_deformation_model_func=add_fem_force_field_from_material,
-        add_collision_model_func=partial(add_triangle_collision_model, group=0),
+        add_collision_model_func=partial(add_collision_model, group=0),
         collision_group=0,
         animation_loop_type=animation_loop
     )
