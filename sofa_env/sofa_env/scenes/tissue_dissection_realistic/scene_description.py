@@ -55,6 +55,7 @@ MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 import gmsh
 import numpy as np
 import tempfile
+print(f"gmsh version: {gmsh.__version__}")
 
 def create_temp_mesh(positions, tetrahedra):
     gmsh.initialize()
