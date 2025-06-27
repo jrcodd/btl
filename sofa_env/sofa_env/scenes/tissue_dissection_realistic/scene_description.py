@@ -55,7 +55,7 @@ MESH_DIR = HERE.parent.parent.parent / "assets/meshes/models"
 
 # Helper function to create a temporary mesh file
 def create_temp_mesh(positions, tetrahedra):
-    tempfile.tempdir = '/tmp/klc130-tmpdir-g2AqZL/'
+    tempfile.tempdir = '/tmp/klc130-tmpdir-G2AqZL/'
     with tempfile.NamedTemporaryFile(suffix=".vtk", delete=False) as tmpfile:
         mesh = meshio.Mesh(points=positions, cells=[("tetra", tetrahedra)])
         mesh.write(tmpfile.name)
