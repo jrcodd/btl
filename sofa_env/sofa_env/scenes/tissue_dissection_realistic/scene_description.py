@@ -61,10 +61,8 @@ def create_temp_mesh(positions, tetrahedra):
     gmsh.model.add("my_mesh")
 
     # Add all points
-    point_tags = []
     for i, (x, y, z) in enumerate(positions):
-        tag = gmsh.model.geo.addPoint(x, y, z)
-        point_tags.append(tag)
+        gmsh.model.geo.addPoint(x, y, z)
     gmsh.model.geo.synchronize()
 
     # Add all tetrahedra as elements
@@ -72,14 +70,10 @@ def create_temp_mesh(positions, tetrahedra):
     tet_nodes = np.array(tetrahedra) + 1  # Gmsh uses 1-based indices
     node_tags = tet_nodes.flatten().tolist()
 
-    # Create a volume entity (this is a workaround for the API)
-    # In Gmsh, you can't directly create a volume from points; you need to create a surface first, then a volume.
-    # For a pure tetrahedral mesh, this is not straightforward, but you can add a dummy volume tag.
-    # The correct way is to use the "discrete" API for unstructured meshes:
-    # First, create a discrete entity:
+    # Create a discrete volume entity
     dim = 3
     tag = gmsh.model.addDiscreteEntity(dim)
-    # Now add the elements to this entity:
+    # Add elements to this entity
     gmsh.model.mesh.addElementsByType(tag, element_type, [], node_tags)
 
     # Optional: sanity checks
@@ -98,6 +92,7 @@ def create_temp_mesh(positions, tetrahedra):
         gmsh.write(tmpfile.name)
         print(f"Temporary mesh file created at: {tmpfile.name}")
         return tmpfile.name
+
 
 
 
@@ -299,6 +294,7 @@ def createScene(
     tissue_grid_topology.position.array().copy(),
     tissue_tetrahedron_topology.tetrahedra.array().copy()
     )
+    gmsh.finalize()
     tissue = CuttableDeformableObject(
         parent_node=scene_node,
         name="tissue",
@@ -331,7 +327,7 @@ def createScene(
         connective_tissue_grid_topology.position.array().copy(),
         connective_tissue_tetrahedron_topology.tetrahedra.array().copy()
     )
-
+    gmsh.finalize()
     connective_tissue = CuttableDeformableObject(
         parent_node=scene_node,
         name="connective_tissue",
